@@ -1,0 +1,9 @@
+# virtualenv -p python3 env
+
+Crypto
+pycrypto
+ipfsapi
+
+
+
+

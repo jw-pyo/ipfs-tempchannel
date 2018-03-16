@@ -1,0 +1,6 @@
+__pycache__/
+data/
+ignore/
+*.pyc
+*.swp
+*.swo

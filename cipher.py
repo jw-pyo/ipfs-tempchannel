@@ -1,6 +1,7 @@
-from Crypto.PublicKey import AES, RSA
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import AES
 from Crypto import Random
-import ast
+import ast, os, random, struct
 
 class AES_cipher():
     def __init__(self, passcode):
@@ -59,21 +60,50 @@ class AES_cipher():
                 outfile.truncate(origsize)
 
 class RSA_cipher(): # public key algorithm
-    def __init__(self):
+    def __init__(self, username=None):
+        self.username = username
+        self.key = None
+    def init(self):
+        if self.username is None:
+            self.username = "Alice"
         self.random_generator = Random.new().read
         self.key = RSA.generate(1024, self.random_generator)
         self.pubkey = self.key.publickey()
+        with open("key/{}.priv".format(self.username), "wb") as privkey:
+            privkey.write(self.key.exportKey(format='PEM'))
+        with open("key/{}.pub".format(self.username), "wb") as pubkey:
+            pubkey.write(self.pubkey.exportKey(format='PEM'))
+            
         #self.prikey = self.key.privatekey()
-    def encrypt(self, msg):
+    def importKey(self, key=None): # [pubkey_path, priv_path]
+        if key is None:
+            key = ["key/{}.pub".format(self.username), "key/{}.priv".format(self.username)]
+        #pub = open(key[0], "rb")
+        pri = open(key[1], "rb")
+        self.key = RSA.importKey(pri.read())
+        self.pubkey = self.key.publickey()
+        #self.privkey = RSA.importKey(key[1])
+    def encrypt_with_public(self, msg):
         encrypted = self.pubkey.encrypt(msg.encode('utf-8'), 32)
         self.encrypted = encrypted[0]
         return encrypted[0]
-    def decrypt(self, msg=None):
+    def encrypt_with_private(self, msg):
+        raise NotImplementedError
+    def decrypt_with_public(self, msg):
+        raise NotImplementedError
+    def decrypt_with_private(self, msg=None):
         if msg is None:
             msg = str(self.encrypted)
+        #print(ast.literal_eval(str(msg)))
         decrypted = self.key.decrypt(ast.literal_eval(str(msg)))
+        #decrypted = self.key.decrypt(bytes(msg))
         return decrypted
-
+    def restore_key(self, priv_path):
+        pass
+    def printParams(self):
+        attr = [attr for attr in vars(self).items() if not attr[0].startswith('__')]
+        print(attr) 
+        return attr
 
 
 

@@ -75,14 +75,18 @@ class RSA_cipher(): # public key algorithm
             pubkey.write(self.pubkey.exportKey(format='PEM'))
             
         #self.prikey = self.key.privatekey()
-    def importKey(self, key=None): # [pubkey_path, priv_path]
-        if key is None:
-            key = ["key/{}.pub".format(self.username), "key/{}.priv".format(self.username)]
-        #pub = open(key[0], "rb")
-        pri = open(key[1], "rb")
-        self.key = RSA.importKey(pri.read())
-        self.pubkey = self.key.publickey()
-        #self.privkey = RSA.importKey(key[1])
+    def importKey(self, keypath=None): # pubkey_path or priv_path
+        if keypath.endswith(".pub"):
+            pubkey_text = open(keypath, "rb")
+            self.pubkey = RSA.importKey(pubkey_text.read())
+            pubkey_text.close()
+        if keypath.endswith(".priv"):
+            prikey_text = open(keypath, "rb")
+            self.key = RSA.importKey(prikey_text.read())
+            self.pubkey = self.key.publickey()
+            prikey_text.close()
+    def importKeyAsString(self, pub_text=None):
+        self.pubkey = RSA.importKey(pub_text)
     def encrypt_with_public(self, msg):
         encrypted = self.pubkey.encrypt(msg.encode('utf-8'), 32)
         self.encrypted = encrypted[0]
@@ -111,7 +115,5 @@ class RSA_cipher(): # public key algorithm
 
 if __name__ == '__main__':
     rsa = RSA_cipher()
-    enc = rsa.encrypt("0x5aafd1adc9e51df587ab13d08892d2ce3921a1db")
-    dec = rsa.decrypt(enc)
-    print((enc))
-    print(dec)
+    rsa.init()
+    print(type(rsa.pubkey))

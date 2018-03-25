@@ -77,8 +77,9 @@ class Server(object):
 
 class Client(object):
     def __init__(self):
-        self.passcode = None
+        self.aes = None
         self.buyer = RSA_cipher("Bob")
+        self.buyer_pub_path = None
         data = []
         i = 0
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -93,8 +94,8 @@ class Client(object):
                 if i == 0:
                     # set the passcode
                     send_buffer = input("")
-                    self.passcode = send_buffer
-                    client_socket.send(send_buffer.encode())
+                    self.aes = AES_cipher(send_buffer)
+                    client_socket.send(self.aes.passcode.encode())
                 elif i == 1:
                     # send the public key
                     send_buffer = input("path to public key: ")
@@ -117,6 +118,7 @@ class Client(object):
                     ipfs_enc1 = None
                     with open("data/ipfs_enc1", "r") as f:
                         ipfs_enc1 = eval(f.read())
+                    os.remove("data/ipfs_enc1")
                     self.buyer.importKey(self.buyer_pri_path)
                     ipfs_hash1 = self.buyer.decrypt_with_private(ipfs_enc1)
                     ipfs_hash1 = ipfs_hash1.decode("utf-8")
@@ -124,8 +126,7 @@ class Client(object):
                     os.rename(ipfs_hash1, download_path)
 
                     # decrypt aes
-                    aes = AES_cipher(self.passcode)
-                    aes.decrypt_file(download_path,download_path+".dec")
+                    self.aes.decrypt_file(download_path,download_path+".dec")
                     print("Download completed.\n")
 
                 else:
@@ -215,10 +216,13 @@ def test2(command):
 if __name__ == '__main__':
     try:
         if(sys.argv[1] == "--server"):
-            s = Server(data_path="/Users/pyo/ipfs-tempchannel/test.txt")
+            s = Server(data_path="/Users/pyo/ipfs-tempchannel/data/3.video.mp4")
             s.run()
         elif(sys.argv[1] == "--client"):
             c = Client()
+        elif(sys.argv[1] == "--generatekey"):
+            keygen = RSA_cipher(sys.argv[2])
+            keygen.init()
     except ConnectionError:
         raise ConnectionError("Err")
     #seller_ = seller()

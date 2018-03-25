@@ -1,13 +1,31 @@
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 from Crypto import Random
-import ast, os, random, struct
+import ast, os, random, struct, string
 
 class AES_cipher():
     def __init__(self, passcode):
         self.passcode = passcode
         self.iv = bytes(16*'\x00'.encode())
-        #self.key = hashlib.sha256(key.encode()).digest()
+        self._add_padding()
+    def _add_padding(self):
+        """
+        set the length of passcode and iv to 16, 24, 32
+        """
+        if len(self.passcode) in [16,24,32]:
+            return
+        if len(self.passcode) < 16:
+            for i in range(16 - len(self.passcode)):
+                self.passcode = self.passcode + random.choice(string.ascii_letters)
+                #self.passcode = self.passcode + random.choice('a')
+        elif len(self.passcode) < 24:
+            for i in range(24 - len(self.passcode)):
+                self.passcode = self.passcode + random.choice(string.ascii_letters)
+                #self.passcode = self.passcode + random.choice('a')
+        elif len(self.passcode) < 32:
+            for i in range(32 - len(self.passcode)):
+                self.passcode = self.passcode + random.choice(string.ascii_letters)
+                #self.passcode = self.passcode + random.choice('a')
     def encrypt_file(self, in_filename, out_filename=None, chunksize=64*1024):
         passcode = self.passcode
         if out_filename is None:
@@ -61,11 +79,16 @@ class AES_cipher():
 
 class RSA_cipher(): # public key algorithm
     def __init__(self, username=None):
-        self.username = username
+        self.usename = None
+        if username is None:
+            self.username = "noname"
+        else:
+            self.username = username
         self.key = None
-    def init(self):
-        if self.username is None:
-            self.username = "Alice"
+        self.pubkey = None
+    def init(self, username=None):
+        if username is not None:
+            self.username = username
         self.random_generator = Random.new().read
         self.key = RSA.generate(1024, self.random_generator)
         self.pubkey = self.key.publickey()

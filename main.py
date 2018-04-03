@@ -6,8 +6,10 @@ import ipfsapi
 from os import listdir
 import os, base64
 import socket, sys
-IP = "localhost"
+
+SERVER_IP = "147.47.206.13"
 PORT = 50401
+CLIENT_IP = "localhost"
 
 # order : client 0 -> server 0 -> client 1 -> ...
 
@@ -28,7 +30,7 @@ class Server(object):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host = socket.gethostname()
         port = PORT
-        server_socket.bind(("", port))
+        server_socket.bind((SERVER_IP, port))
         server_socket.listen(5)
         print("Server waiting for client on port {}".format(port))
         while True:
@@ -42,7 +44,7 @@ class Server(object):
                         "channel: {}, send the public key".format(self.aes_passphrase),
                         "ipfs_hash: {}".format(self.ipfs_addr)]
                 #waiting...
-                client_socket.send(data[i].encode()) 
+                client_socket.send(data[i].encode())
                 recv_buffer = client_socket.recv(512).decode()
                 print("client [{}]:".format(client_addr), recv_buffer)
                 if i == 0:
@@ -73,7 +75,7 @@ class Server(object):
                 i += 1
             break;
         server_socket.close()
-        print("SOCKET closed... END") 
+        print("SOCKET closed... END")
 
 class Client(object):
     def __init__(self):
@@ -83,7 +85,7 @@ class Client(object):
         data = []
         i = 0
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((IP, PORT))
+        client_socket.connect((CLIENT_IP, PORT))
         while True:
             data = client_socket.recv(512).decode()
             if(data == 'q' or data=='Q'):
@@ -122,12 +124,14 @@ class Client(object):
                     self.buyer.importKey(self.buyer_pri_path)
                     ipfs_hash1 = self.buyer.decrypt_with_private(ipfs_enc1)
                     ipfs_hash1 = ipfs_hash1.decode("utf-8")
+                    print("downloading...\n")
                     ipfs.get(ipfs_hash1)
                     os.rename(ipfs_hash1, download_path)
-
+                    print("download complete...\n")
                     # decrypt aes
+                    print("decryping...\n")
                     self.aes.decrypt_file(download_path,download_path+".dec")
-                    print("Download completed.\n")
+                    print("Complete.\n")
 
                 else:
                     send_buffer = "dummy"
@@ -186,7 +190,7 @@ def buyer(ipfs_hash2):
     passcode = '12345678901234567890123456789012'
     data = "data/test.txt"
     aes = AES_cipher(passcode)
-    
+
     ipfs_enc1 = ipfs.get(ipfs_hash2)
     with open(ipfs_hash2, "r") as f:
         ipfs_enc1 = eval(f.read())
@@ -195,10 +199,10 @@ def buyer(ipfs_hash2):
     print("ipfs_hash1: "+ ipfs_hash1.decode("utf-8"))
     enc_jpg = ipfs.get(ipfs_hash1)
     os.system("rm {}".format(ipfs_hash2))
-    
+
     hashfiles = [f for f in listdir(os.getcwd()) if f.startswith("Qm")][0]
-    aes.decrypt_file(hashfiles, "data/output/result.txt") 
-    
+    aes.decrypt_file(hashfiles, "data/output/result.txt")
+
 
 def test2(command):
     """
@@ -216,7 +220,7 @@ def test2(command):
 if __name__ == '__main__':
     try:
         if(sys.argv[1] == "--server"):
-            s = Server(data_path="/Users/pyo/ipfs-tempchannel/data/3.video.mp4")
+            s = Server(data_path="/home/jwpyo/ipfs-tempchannel/data/1.picture.jpeg")
             s.run()
         elif(sys.argv[1] == "--client"):
             c = Client()
@@ -228,5 +232,5 @@ if __name__ == '__main__':
     #seller_ = seller()
     #buyer(seller_)
 
-    
+
 
